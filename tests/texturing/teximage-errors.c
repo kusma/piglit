@@ -229,6 +229,39 @@ test_depth_formats(const struct format_desc *test, GLenum expected_error,
    }
    return result;
 }
+
+static bool
+test_gl10_internalformats(void)
+{
+   GLenum expected_error = piglit_is_core_profile ? GL_INVALID_VALUE : GL_NO_ERROR;
+   GLenum internalformat;
+   bool result = true;
+
+   for (internalformat = 1; internalformat <= 4; ++internalformat) {
+      static const GLenum formats[4] = { GL_LUMINANCE, GL_LUMINANCE_ALPHA,
+                                         GL_RGB, GL_RGBA };
+      glTexImage1D(GL_TEXTURE_1D, 0, internalformat, 16, 0,
+                   formats[internalformat - 1], GL_UNSIGNED_BYTE, NULL);
+      result = piglit_check_gl_error(expected_error) && result;
+
+      glTexImage2D(GL_TEXTURE_2D, 0, internalformat, 16, 16, 0,
+                  formats[internalformat - 1], GL_UNSIGNED_BYTE, NULL);
+      result = piglit_check_gl_error(expected_error) && result;
+
+      glTexImage3D(GL_TEXTURE_3D, 0, internalformat, 16, 16, 16, 0,
+                   formats[internalformat - 1], GL_UNSIGNED_BYTE, NULL);
+
+      if (!piglit_is_extension_supported("GL_EXT_texture_array"))
+         continue;
+
+      glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, internalformat, 16, 16, 16, 0,
+                   formats[internalformat - 1], GL_UNSIGNED_BYTE, NULL);
+      result = piglit_check_gl_error(expected_error) && result;
+   }
+   return result;
+}
+
+
 enum piglit_result
 piglit_display(void)
 {
@@ -250,6 +283,7 @@ piglit_display(void)
    pass = test_depth_formats(formats_not_allowed, GL_INVALID_OPERATION,
                              ARRAY_SIZE(formats_not_allowed))
           && pass;
+   pass = test_gl10_internalformats() && pass;
    return pass ? PIGLIT_PASS: PIGLIT_FAIL;
 }
 
